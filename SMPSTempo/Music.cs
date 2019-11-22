@@ -88,7 +88,7 @@ namespace SMPSTempo
 		public static void SetTempo(int pct)
 		{
 			if (initsuccess)
-				NativeMethods.SMPS_SetSongTempo(pct);
+				NativeMethods.SMPS_SetSongTempo(100.0 / pct);
 		}
 
 		public static void RegisterSongStoppedCallback(Action callback)
