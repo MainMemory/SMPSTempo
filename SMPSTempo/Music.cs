@@ -10,24 +10,26 @@ namespace SMPSTempo
 	{
 		private static class NativeMethods
 		{
-			[DllImport("SMPSOUT", ExactSpelling = true, CharSet = CharSet.Auto)]
-			public static extern bool InitializeDriver();
-			[DllImport("SMPSOUT", ExactSpelling = true, CharSet = CharSet.Auto)]
-			public static extern bool PlaySong(short song);
-			[DllImport("SMPSOUT", ExactSpelling = true, CharSet = CharSet.Auto)]
-			public static extern bool StopSong();
-			[DllImport("SMPSOUT", ExactSpelling = true, CharSet = CharSet.Auto)]
-			public static extern void FadeOutSong();
-			[DllImport("SMPSOUT", ExactSpelling = true, CharSet = CharSet.Auto)]
-			public static extern bool SetSongTempo(int pct);
-			[DllImport("SMPSOUT", ExactSpelling = true, CharSet = CharSet.Auto)]
-			public static unsafe extern IntPtr* GetCustomSongs(out uint count);
-			[DllImport("SMPSOUT", ExactSpelling = true, CharSet = CharSet.Auto)]
-			public static extern void RegisterSongStoppedCallback([MarshalAs(UnmanagedType.FunctionPtr)] Action callback);
-			[DllImport("SMPSOUT", ExactSpelling = true, CharSet = CharSet.Auto)]
-			public static extern void SetWaveLogPath([MarshalAs(UnmanagedType.LPStr)] string logfile);
-			[DllImport("SMPSOUT", ExactSpelling = true, CharSet = CharSet.Auto)]
-			public static extern void RegisterSongLoopCallback([MarshalAs(UnmanagedType.FunctionPtr)] Action callback);
+			[DllImport("SMPSPlay", ExactSpelling = true, CharSet = CharSet.Auto)]
+			public static extern bool SMPS_InitializeDriver();
+			[DllImport("SMPSPlay", ExactSpelling = true, CharSet = CharSet.Auto)]
+			public static extern bool SMPS_DeInitializeDriver();
+			[DllImport("SMPSPlay", ExactSpelling = true, CharSet = CharSet.Auto)]
+			public static extern bool SMPS_LoadAndPlaySong(short song);
+			[DllImport("SMPSPlay", ExactSpelling = true, CharSet = CharSet.Auto)]
+			public static extern bool SMPS_StopSong();
+			[DllImport("SMPSPlay", ExactSpelling = true, CharSet = CharSet.Auto)]
+			public static extern void SMPS_FadeOutSong();
+			[DllImport("SMPSPlay", ExactSpelling = true, CharSet = CharSet.Auto)]
+			public static extern bool SMPS_SetSongTempo(double multiplier);
+			[DllImport("SMPSPlay", ExactSpelling = true, CharSet = CharSet.Auto)]
+			public static unsafe extern IntPtr* SMPS_GetSongNames(out uint count);
+			[DllImport("SMPSPlay", ExactSpelling = true, CharSet = CharSet.Auto)]
+			public static extern void SMPS_RegisterSongStoppedCallback([MarshalAs(UnmanagedType.FunctionPtr)] Action callback);
+			[DllImport("SMPSPlay", ExactSpelling = true, CharSet = CharSet.Auto)]
+			public static extern void SMPS_SetWaveLogPath([MarshalAs(UnmanagedType.LPStr)] string logfile);
+			[DllImport("SMPSPlay", ExactSpelling = true, CharSet = CharSet.Auto)]
+			public static extern void SMPS_RegisterSongLoopCallback([MarshalAs(UnmanagedType.FunctionPtr)] Action callback);
 		}
 
 		static bool initsuccess;
@@ -36,27 +38,28 @@ namespace SMPSTempo
 		internal static unsafe bool Init()
 		{
 			if (initsuccess) return true;
-			if (!File.Exists("songs.ini")) return false;
-			Dictionary<string, Dictionary<string, string>> ini = IniFile.Load("songs.ini");
-			if (File.Exists("songs_SKC.ini"))
-				ini = IniFile.Combine(ini, IniFile.Load("songs_SKC.ini"));
-			songNames = new List<string>(IniSerializer.Deserialize<SongList>(ini).songs.Keys);
+			songNames = new List<string>();
 			string dir = Environment.CurrentDirectory;
 			Environment.CurrentDirectory = Path.Combine(Environment.CurrentDirectory, "lib" + (IntPtr.Size == 8 ? "64" : "32"));
-			try { NativeMethods.SetSongTempo(100); }
+			try { NativeMethods.SMPS_SetSongTempo(1); }
 			catch
 			{
 				Environment.CurrentDirectory = dir;
 				return false;
 			}
 			Environment.CurrentDirectory = dir;
-			NativeMethods.SetWaveLogPath(DateTime.Now.ToString() + ".wav");
-			NativeMethods.InitializeDriver();
+			NativeMethods.SMPS_SetWaveLogPath(DateTime.Now.ToString() + ".wav");
+			NativeMethods.SMPS_InitializeDriver();
 			uint custcnt;
-			IntPtr* p = NativeMethods.GetCustomSongs(out custcnt);
+			IntPtr* p = NativeMethods.SMPS_GetSongNames(out custcnt);
 			for (uint i = 0; i < custcnt; i++)
 				songNames.Add(Marshal.PtrToStringAnsi(*(p++)));
 			return initsuccess = true;
+		}
+
+		internal static void DeInit()
+		{
+			NativeMethods.SMPS_DeInitializeDriver();
 		}
 
 		public static ReadOnlyCollection<string> GetSongNames()
@@ -67,37 +70,37 @@ namespace SMPSTempo
 		public static void PlaySong(short song)
 		{
 			if (initsuccess)
-				NativeMethods.PlaySong(song);
+				NativeMethods.SMPS_LoadAndPlaySong(song);
 		}
 
 		public static void StopSong()
 		{
 			if (initsuccess)
-				NativeMethods.StopSong();
+				NativeMethods.SMPS_StopSong();
 		}
 
 		public static void FadeOutSong()
 		{
 			if (initsuccess)
-				NativeMethods.FadeOutSong();
+				NativeMethods.SMPS_FadeOutSong();
 		}
 
 		public static void SetTempo(int pct)
 		{
 			if (initsuccess)
-				NativeMethods.SetSongTempo(pct);
+				NativeMethods.SMPS_SetSongTempo(pct);
 		}
 
 		public static void RegisterSongStoppedCallback(Action callback)
 		{
 			if (initsuccess)
-				NativeMethods.RegisterSongStoppedCallback(callback);
+				NativeMethods.SMPS_RegisterSongStoppedCallback(callback);
 		}
 
 		public static void RegisterSongLoopCallback(Action callback)
 		{
 			if (initsuccess)
-				NativeMethods.RegisterSongLoopCallback(callback);
+				NativeMethods.SMPS_RegisterSongLoopCallback(callback);
 		}
 	}
 

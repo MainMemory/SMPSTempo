@@ -291,6 +291,7 @@
 			this.Name = "MainForm";
 			this.Padding = new System.Windows.Forms.Padding(0, 0, 3, 3);
 			this.Text = "SMPS Tempo";
+			this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainForm_FormClosed);
 			this.Load += new System.EventHandler(this.Form1_Load);
 			((System.ComponentModel.ISupportInitialize)(this.startTempoControl)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.endTempoControl)).EndInit();

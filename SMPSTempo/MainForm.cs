@@ -59,6 +59,11 @@ namespace SMPSTempo
 			}
 		}
 
+		private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
+		{
+			Music.DeInit();
+		}
+
 		bool started = false;
 		int currenttempo;
 		int endtempo;
